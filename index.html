@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ledger — Personal Expense Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,340;0,9..144,500;0,9..144,600;1,9..144,500&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="app">
+
+  <header class="site-header">
+    <div class="wordmark">
+      <span class="wordmark-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 17 L9 11 L13 15 L21 6"/>
+          <path d="M15 6 H21 V12"/>
+        </svg>
+      </span>
+      <div>
+        <h1>Ledger</h1>
+        <p class="tagline">Every rupee, accounted for.</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button id="themeToggle" class="icon-btn" type="button" aria-label="Toggle day/night theme">
+        <svg class="icon-sun" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="4.2"/>
+          <path d="M12 2.5v2.4M12 19.1v2.4M4.6 4.6l1.7 1.7M17.7 17.7l1.7 1.7M2.5 12h2.4M19.1 12h2.4M4.6 19.4l1.7-1.7M17.7 6.3l1.7-1.7"/>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a6.8 6.8 0 0 0 10.5 10.5Z"/>
+        </svg>
+      </button>
+      <button id="exportBtn" class="btn-ghost" type="button">Export CSV</button>
+      <button id="clearBtn" class="btn-ghost btn-danger" type="button">Clear all</button>
+    </div>
+  </header>
+
+  <p class="greeting-text" id="greetingText"></p>
+
+  <section class="receipt-wrap">
+    <div class="receipt" id="receipt">
+      <div class="receipt-edge receipt-edge-top" aria-hidden="true"></div>
+      <div class="receipt-body">
+        <p class="receipt-label">CURRENT BALANCE</p>
+        <p class="receipt-balance" id="balanceValue">₹0.00</p>
+        <div class="receipt-divider"></div>
+        <div class="receipt-row">
+          <span>Income</span>
+          <span class="dots" aria-hidden="true"></span>
+          <span id="incomeValue" class="figure figure-income">₹0.00</span>
+        </div>
+        <div class="receipt-row">
+          <span>Expenses</span>
+          <span class="dots" aria-hidden="true"></span>
+          <span id="expenseValue" class="figure figure-expense">₹0.00</span>
+        </div>
+        <div class="receipt-divider dashed"></div>
+        <p class="receipt-footnote" id="txnCount">0 entries logged</p>
+      </div>
+      <div class="receipt-edge receipt-edge-bottom" aria-hidden="true"></div>
+    </div>
+  </section>
+
+  <main class="workspace">
+
+    <aside class="panel entry-panel">
+      <h2>New entry</h2>
+
+      <div class="quick-add">
+        <div class="quick-add-label"><span class="spark">✦</span> Quick add</div>
+        <div class="quick-add-row">
+          <input type="text" id="quickAddInput" placeholder="e.g. “lunch with client 450 yesterday”">
+          <button type="button" id="quickAddBtn" class="btn-secondary">Parse</button>
+        </div>
+        <div class="quick-add-preview" id="quickAddPreview" hidden></div>
+      </div>
+
+      <form id="entryForm" novalidate>
+        <div class="type-toggle" role="group" aria-label="Entry type">
+          <button type="button" class="type-btn active" data-type="expense">Expense</button>
+          <button type="button" class="type-btn" data-type="income">Income</button>
+        </div>
+
+        <label class="field">
+          <span>Description</span>
+          <input type="text" id="descInput" placeholder="e.g. Coffee with Sam" autocomplete="off" required>
+        </label>
+
+        <div class="field-row">
+          <label class="field">
+            <span>Amount</span>
+            <input type="number" id="amountInput" placeholder="0.00" min="0.01" step="0.01" inputmode="decimal" required>
+          </label>
+          <label class="field">
+            <span>Date</span>
+            <input type="date" id="dateInput" required>
+          </label>
+        </div>
+
+        <div class="field">
+          <span>Category <span class="category-hint" id="categoryHint">auto-detected</span></span>
+          <div class="custom-select" id="categoryCustomSelect">
+            <button type="button" class="custom-select-trigger" id="categoryTrigger" aria-haspopup="listbox" aria-expanded="false">
+              <span id="categoryTriggerLabel">Select category</span>
+              <svg class="chevron" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+            <div class="custom-select-panel" id="categoryPanel" hidden>
+              <ul class="custom-select-list" id="categoryOptionsList" role="listbox"></ul>
+              <div class="custom-select-add">
+                <input type="text" id="newCategoryInput" placeholder="New category name" maxlength="24">
+                <button type="button" id="addCategoryBtn">Add</button>
+              </div>
+            </div>
+          </div>
+          <select id="categoryInput" class="visually-hidden" tabindex="-1" aria-hidden="true"></select>
+        </div>
+
+        <button type="submit" class="btn-primary">Add to ledger</button>
+        <p class="form-error" id="formError" hidden></p>
+      </form>
+
+      <div class="breakdown">
+        <h2>Where it goes</h2>
+        <div class="chart-wrap">
+          <canvas id="chart" width="200" height="200"></canvas>
+          <div class="chart-center" id="chartCenter">
+            <span class="chart-center-label">Spent</span>
+            <span class="chart-center-value" id="chartCenterValue">₹0</span>
+          </div>
+        </div>
+        <ul id="chartLegend" class="legend"></ul>
+      </div>
+    </aside>
+
+    <section class="panel ledger-panel">
+      <div class="ledger-toolbar">
+        <input type="search" id="searchInput" placeholder="Search entries…" aria-label="Search entries">
+        <div class="custom-select custom-select--sort" id="sortCustomSelect">
+          <button type="button" class="custom-select-trigger" id="sortTrigger" aria-haspopup="listbox" aria-expanded="false">
+            <span id="sortTriggerLabel">Newest first</span>
+            <svg class="chevron" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div class="custom-select-panel" id="sortPanel" hidden>
+            <ul class="custom-select-list" id="sortOptionsList" role="listbox">
+              <li role="option" data-sort="date-desc" class="active">Newest first</li>
+              <li role="option" data-sort="date-asc">Oldest first</li>
+              <li role="option" data-sort="amount-desc">Highest amount</li>
+              <li role="option" data-sort="amount-asc">Lowest amount</li>
+            </ul>
+          </div>
+        </div>
+        <select id="sortSelect" class="visually-hidden" tabindex="-1" aria-hidden="true">
+          <option value="date-desc">Newest first</option>
+          <option value="date-asc">Oldest first</option>
+          <option value="amount-desc">Highest amount</option>
+          <option value="amount-asc">Lowest amount</option>
+        </select>
+      </div>
+      <div class="filter-chips" id="filterChips"></div>
+
+      <div class="ledger-list" id="ledgerList"></div>
+      <p class="empty-state" id="emptyState" hidden>Nothing logged yet — add your first entry, it's the ink that starts the page.</p>
+    </section>
+
+  </main>
+
+  <section class="panel trend-panel">
+    <div class="insights-header">
+      <h2>Cash flow over time</h2>
+      <span id="trendLatest" class="trend-latest"></span>
+    </div>
+    <div class="trend-chart-wrap">
+      <canvas id="trendChart" width="900" height="220"></canvas>
+      <p class="trend-empty" id="trendEmpty" hidden>Log a few entries across different dates to see your trend.</p>
+    </div>
+  </section>
+
+  <section class="panel insights-panel">
+    <div class="insights-header">
+      <h2>Insights</h2>
+      <span class="ai-stamp">AI ANALYZED</span>
+    </div>
+    <ul class="insights-list" id="insightsList"></ul>
+  </section>
+
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
